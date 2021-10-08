@@ -1,6 +1,6 @@
 import setuptools
  
-package_name = 'aclib'
+package_name = 'hace'
 
 with open('README.md', 'r') as fh:
     long_description = fh.read()
@@ -12,10 +12,10 @@ setuptools.setup( name                          = package_name
                 , version                       = '0.0.1'
                 , author                        = 'Yannick Uhlmann, Matthias Schweikardt'
                 , author_email                  = 'yannick.uhlmann@reutlingen-university.de'
-                , description                   = 'Operational Amplifier Characterization'
+                , description                   = 'Analog Circuit Characterization Environment'
                 , long_description              = long_description
                 , long_description_content_type = 'text/markdown'
-                , url                           = 'https://github.com/electronics-and-drives/analog-circuit-library'
+                , url                           = 'https://github.com/augustunderground/hace'
                 , packages                      = setuptools.find_packages()
                 , classifiers                   = [ 'Development Status :: 2 :: Pre-Alpha'
                                                   , 'Programming Language :: Python :: 3'

@@ -21,3 +21,5 @@ amp-char/__pycache__/
 amp-char/*.py[cod]
 amp-char/*.hy[cod]
 amp-char/*$py.class
+
+hs*.log

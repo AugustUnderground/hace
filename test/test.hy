@@ -2,10 +2,11 @@
 (import [numpy :as np])
 (import [pandas :as pd])
 (import [datetime [datetime :as dt]])
-(import [aclib :as ac])
+(import [hace :as ac])
 (require [hy.contrib.walk [let]])
 (require [hy.contrib.loop [loop]])
 (require [hy.extra.anaphoric [*]])
+(import [hy.contrib.pprint [pp pprint]])
 
 (setv HOME       (os.path.expanduser "~")
       time-stamp (-> dt (.now) (.strftime "%H%M%S-%y%m%d"))
@@ -16,12 +17,17 @@
       jar-path  f"{HOME}/.m2/repository/edlab/eda/characterization/0.0.1/characterization-0.0.1-jar-with-dependencies.jar"
       ckt-path  f"../library")
 
-(setv op (ac.sym-amp-xh035 pdk-path ckt-path))
+(setx op (ac.sym-amp-xh035 pdk-path ckt-path))
 
-(setv res (ac.evaluate-ciruit op))
+(setx res (ac.evaluate-circuit op))
 
 (setv rp (ac.random-sizing op))
-(setv ip (ac.initial-sizing op))
+(setv res (ac.evaluate-circuit op rp))
+(pp rp)
+;(pp res)
+
+
+(setx ip (ac.initial-sizing op))
 
 (reduce (fn [df p]
     (->> p (ac.simulate op) (df.append :ignore-index True)))
