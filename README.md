@@ -1,7 +1,6 @@
-# HACE
+# HAC²E
 
-Minimal functional interface to ACE for Hy.
-[analog-circuit-library](https://gitlab-forschung.reutlingen-university.de/schweikm/analog-circuit-library).
+Minimal functional interface to AC²E for Hy.
 
 ## Installation
 
