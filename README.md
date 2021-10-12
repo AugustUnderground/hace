@@ -1,10 +1,10 @@
 # HAC²E
 
-Minimal functional interface to [AC²E](https://github.com/mattschw/ace) for Hy.
+Minimal functional interface to [AC²E](https://github.com/matthschw/ace) for Hy.
 
 ## Installation
 
-Make sure [AC²E](https://github.com/mattschw/ace) and all dependencies are
+Make sure [AC²E](https://github.com/matthschw/ace) and all dependencies are
 installed.
 
 Install with `pip`:
@@ -34,7 +34,7 @@ res = ac.evaluate_circuit(amp, siz)
 Where `path_to_pdk` is optional, if your netlist requries it, otherwise give an
 empty list. `path_to_netlist` should point to a directory with an `input.scs`
 and corresponding `.json` as seen in the examples for
-[AC²E](https://github.com/mattschw/ace).
+[AC²E](https://github.com/matthschw/ace).
 
 ## API
 
