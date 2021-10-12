@@ -1,11 +1,14 @@
 import hy
 
-from .hace import sym_amp_xh035            \
-                 , miller_amp_xh035         \
-                 , evaluate_circuit         \
-                 , initial_sizing           \
-                 , random_sizing            \
-                 , performance_parameters
+from .hace import single_ended_opamp    \
+                , set_parameter         \
+                , set_parameters        \
+                , evaluate_circuit      \
+                , current_performance   \
+                , random_sizing         \
+                , current_sizing        \
+                , initial_sizing        \
+                , sizing_parameters
 
 from .util import __name__  \
                 , __version__

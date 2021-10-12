@@ -19,48 +19,83 @@
 (unless (importlib.util.find_spec "edlab")
     (jpype.addClassPath (default-class-path)))
 
-(global Opamp1XH035Characterization Opamp2XH035Characterization)
+;(global SingleEndedOpampEnvironment)
 
-(import [edlab.eda.characterization [ Opamp1XH035Characterization 
-                                      Opamp2XH035Characterization ]])
+(import [edlab.eda.ace [ SingleEndedOpampEnvironment ]])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn make-amp [amp ^str sim-path ^str pdk-path ^str ckt-path ]
-  (let [op (amp.build sim-path pdk-path ckt-path)]
-  (.start op)
-  op))
+(defn make-amp [amp ^str sim-path ^(of list str) pdk-path ^str ckt-path]
+  """
+  Meta function.
+  """
+  (amp.get sim-path pdk-path ckt-path))
 
-(defn sym-amp-xh035 [^str pdk-path ^str ckt-path
-                  &optional ^str [sim-path "/tmp"]]
-  (make-amp Opamp2XH035Characterization sim-path pdk-path ckt-path))
+(defn single-ended-opamp [^str ckt-path &optional ^str [sim-path "/tmp"]
+                                                  ^(of list str) [pdk-path []]]
+  """
+  Create a single ended opamp with the given testbench and pdk.
+  """
+  (make-amp SingleEndedOpampEnvironment sim-path ckt-path pdk-path))
 
-(defn miller-amp-xh035 [^str pdk-path ^str ckt-path
-                  &optional ^str [sim-path "/tmp"]]
-  (make-amp Opamp1XH035Characterization sim-path pdk-path ckt-path))
-
-(defn set-parameter [amp ^str param ^float value]
+(defn set-parameter ^(of dict str float) [amp ^str param ^float value]
+  """
+  Change a single parameter. Returns the current sizing.
+  """
   (amp.set param value)
-  amp)
+  (sizing-parameters amp))
 
-(defn set-parameters [amp ^dict param-dict]
-  (if param-dict
-    (set-parameters (set-parameter amp #* (-> param-dict (.items) (first) (tuple))) 
-                    (-> param-dict (.items) (rest) (dict)))
-    amp))
+(defn set-parameters [amp ^(of dict str float) param-dict]
+  """
+  Set a parameter dictionary. (i.e. from `random-sizing`). Returns the current
+  sizing.
+  """
+  (ap-reduce 
+    (set-parameter amp #* it)
+    (.items param-dict) 
+    (current-sizing amp)))
 
-(defn simulate [amp]
-  (.simulate amp)
-  (jmap-to-dict (.getPerformanceValues amp)))
+;(defn simulate ^(of dict str float) [amp]
+;  (.simulate amp)
+;  (jmap-to-dict (.getPerformanceValues amp)))
 
-(defn evaluate-circuit [amp  &optional ^dict params]
-  (-> amp (set-parameters params) (simulate)))
+(defn evaluate-circuit ^(of dict str float) 
+    [amp  &optional ^(of dict str float) [params {}]]
+  """
+  Functionally evaluate a given amplifier.
+  """
+  (set-parameters amp params)
+  (-> amp  (.simulate) (current-performance)))
 
-(defn random-sizing [amp]
-  (-> amp (.getRandomValues) (jmap-to-dict)))
+;(defn performance-parameters ^(of list str) [amp]
+;  (jsa-to-list amp.getPerformanceIdentifiers))
 
-(defn initial-sizing [amp]
-  (-> amp (.getInitValues) (jmap-to-dict)))
+(defn current-performance ^(of dict str float) [amp]
+  """
+  **IMPURE**. Returns the current performance of the circuit.
+  """
+  (-> amp (.getPerformanceValues) (jmap-to-dict)))
 
-(defn performance-parameters [amp]
-  (jsa-to-list amp.getPerformanceIdentifiers))
+(defn random-sizing ^(of dict str float) [amp]
+  """
+  **IMPURE**. Returns random sizing parameters.
+  """
+  (-> amp (.getRandomSizingParameters) (jmap-to-dict)))
+
+(defn current-sizing ^(of dict str float) [amp]
+  """
+  **IMPURE**. Returns the sizing parameters currently in the netlist.
+  """
+  (-> amp (.getInitialSizingParameters) (jmap-to-dict)))
+
+(defn initial-sizing ^(of dict str float) [amp]
+  """
+  'Reasonable' initial sizing.
+  """
+  (-> amp (.getInitialSizingParameters) (jmap-to-dict)))
+
+(defn sizing-parameters ^(of list str) [amp]
+  """
+  A list of available sizing parameters for a given OP-Amp
+  """
+  (-> amp (.getParameterValues) (jsa-to-list)))
