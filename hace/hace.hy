@@ -19,9 +19,8 @@
 (unless (importlib.util.find_spec "edlab")
     (jpype.addClassPath (default-class-path)))
 
-;(global SingleEndedOpampEnvironment)
-
 (import [edlab.eda.ace [ SingleEndedOpampEnvironment ]])
+(import [java.util.HashSet :as HashSet])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -53,28 +52,30 @@
   (ap-reduce 
     (set-parameter amp #* it)
     (.items param-dict) 
-    (current-sizing amp)))
-
-;(defn simulate ^(of dict str float) [amp]
-;  (.simulate amp)
-;  (jmap-to-dict (.getPerformanceValues amp)))
+    (current-sizing amp))
+  amp)
 
 (defn evaluate-circuit ^(of dict str float) 
-    [amp  &optional ^(of dict str float) [params {}]]
+    [amp  &optional ^(of dict str float) [params {}]
+                    ^list [blocklist []]]
   """
   Functionally evaluate a given amplifier.
   """
-  (set-parameters amp params)
-  (-> amp  (.simulate) (current-performance)))
-
-;(defn performance-parameters ^(of list str) [amp]
-;  (jsa-to-list amp.getPerformanceIdentifiers))
+  (-> amp (set-parameters params) 
+          (.simulate (HashSet blocklist)) 
+          (current-performance)))
 
 (defn current-performance ^(of dict str float) [amp]
   """
   **IMPURE**. Returns the current performance of the circuit.
   """
   (-> amp (.getPerformanceValues) (jmap-to-dict)))
+
+(defn performance-parameters ^(of list str) [amp &optional ^list [blocklist []]]
+  """
+  Get list of available performance parameters.
+  """
+  (jsa-to-list (.getPerformanceIdentifiers amp (HashSet blocklist))))
 
 (defn random-sizing ^(of dict str float) [amp]
   """

@@ -18,6 +18,8 @@
 
 (setx op (ac.single-ended-opamp ckt-path :pdk-path [pdk-path] :sim-path sim-path))
 
+(pp (setx ros (ac.evaluate-circuit op :blocklist ["foobar" "döner"])))
+
 (pp (setx res (ac.evaluate-circuit op)))
 
 (setv rp (ac.random-sizing op))
