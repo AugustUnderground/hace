@@ -42,7 +42,7 @@
   Change a single parameter. Returns the current sizing.
   """
   (amp.set param value)
-  (sizing-parameters amp))
+  (current-sizing amp))
 
 (defn set-parameters [amp ^(of dict str float) param-dict]
   """
@@ -95,8 +95,11 @@
   """
   (-> amp (.getInitialSizingParameters) (jmap-to-dict)))
 
-(defn sizing-parameters ^(of list str) [amp]
+(defn parameter-identifiers ^(of list str) [amp]
   """
   A list of available sizing parameters for a given OP-Amp
   """
   (-> amp (.getParameterValues) (jsa-to-list)))
+
+(defn simulation-analyses  [amp]
+  (-> amp (.getAnalyses) (jsa-to-list)))

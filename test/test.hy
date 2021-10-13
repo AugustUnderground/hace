@@ -18,7 +18,8 @@
 
 (setx op (ac.single-ended-opamp ckt-path :pdk-path [pdk-path] :sim-path sim-path))
 
-(pp (setx ros (ac.evaluate-circuit op :blocklist ["foobar" "döner"])))
+(pp (setx ros (ac.evaluate-circuit op :blocklist (ac.simulation-analyses op))))
+(pp (setx ros (ac.evaluate-circuit op :blocklist ["stb" "ac" "dc1" "dc4" "dc3" "noise" "dcmatch" "tran" "dcop" "xf"])))
 
 (pp (setx res (ac.evaluate-circuit op)))
 
