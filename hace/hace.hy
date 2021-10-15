@@ -71,23 +71,23 @@
   """
   (-> amp (.getPerformanceValues) (jmap-to-dict)))
 
-(defn performance-parameters ^(of list str) [amp &optional ^list [blocklist []]]
+(defn performance-identifiers ^(of list str) [amp &optional ^list [blocklist []]]
   """
   Get list of available performance parameters.
   """
   (jsa-to-list (.getPerformanceIdentifiers amp (HashSet blocklist))))
+
+(defn current-parameters ^(of dict str float) [amp]
+  """
+  **IMPURE**. Returns the sizing parameters currently in the netlist.
+  """
+  (-> amp (.getParameterValues) (jmap-to-dict)))
 
 (defn random-sizing ^(of dict str float) [amp]
   """
   **IMPURE**. Returns random sizing parameters.
   """
   (-> amp (.getRandomSizingParameters) (jmap-to-dict)))
-
-(defn current-sizing ^(of dict str float) [amp]
-  """
-  **IMPURE**. Returns the sizing parameters currently in the netlist.
-  """
-  (-> amp (.getInitialSizingParameters) (jmap-to-dict)))
 
 (defn initial-sizing ^(of dict str float) [amp]
   """
@@ -99,7 +99,7 @@
   """
   A list of available sizing parameters for a given OP-Amp
   """
-  (-> amp (.getParameterValues) (jsa-to-list)))
+  (-> amp (.getParameters) (jsa-to-list)))
 
 (defn simulation-analyses  [amp]
   (-> amp (.getAnalyses) (jsa-to-list)))

@@ -14,9 +14,10 @@
       pmos-path f"../models/xh035-pmos"
       sim-path f"{HOME}/Workspace/sim"
       pdk-path  f"/mnt/data/pdk/XKIT/xh035/cadence/v6_6/spectre/v6_6_2/mos"
-      ckt-path  f"../library/testbenches/op2")
+      ckt-path  f"../ACE/ace/resource/xh035-3V3/op2")
 
 (setx op (ac.single-ended-opamp ckt-path :pdk-path [pdk-path] :sim-path sim-path))
+
 
 (pp (setx ros (ac.evaluate-circuit op :blocklist (ac.simulation-analyses op))))
 (pp (setx ros (ac.evaluate-circuit op :blocklist ["stb" "ac" "dc1" "dc4" "dc3" "noise" "dcmatch" "tran" "dcop" "xf"])))
