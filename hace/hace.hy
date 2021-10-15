@@ -42,7 +42,7 @@
   Change a single parameter. Returns the current sizing.
   """
   (amp.set param value)
-  (current-sizing amp))
+  (current-parameters amp))
 
 (defn set-parameters [amp ^(of dict str float) param-dict]
   """
@@ -52,7 +52,7 @@
   (ap-reduce 
     (set-parameter amp #* it)
     (.items param-dict) 
-    (current-sizing amp))
+    (current-parameters amp))
   amp)
 
 (defn evaluate-circuit ^(of dict str float) 
