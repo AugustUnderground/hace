@@ -1,5 +1,6 @@
 (import os)
 (import shutil)
+(import errno)
 (import importlib)
 (import [pkg-resources [get-distribution]])
 (import [typing [Union]])
