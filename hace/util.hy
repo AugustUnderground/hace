@@ -34,7 +34,7 @@
   (let [maven-home (get-maven-home)
         class-path (.format (+ "{}/edlab/eda/ace/{}/"
                                "ace-{}-jar-with-dependencies.jar")
-                            maven-home __version__ __version__)]
+                            maven-home "0.0.1" "0.0.1")]
     (if (and (os.path.isfile class-path)
           (os.access class-path os.R-OK))
       class-path
