@@ -10,7 +10,10 @@ from .hace import single_ended_opamp      \
                 , random_sizing           \
                 , initial_sizing          \
                 , current_parameters      \
-                , parameter_identifiers
+                , parameter_identifiers   \
+                , sizing_identifiers      \
+                , load_state              \
+                , dump_state              \
 
 from .util import __name__      \
                 , __version__   \

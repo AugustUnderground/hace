@@ -9,7 +9,7 @@
 (require [hy.contrib.loop [loop]])
 (require [hy.extra.anaphoric [*]])
 
-(setv __name__ "aclib"
+(setv __name__ "hace"
       __version__ (-> __name__ (get-distribution) (. version)))
 
 (defn get-maven-home ^str [] 
@@ -34,7 +34,7 @@
   (let [maven-home (get-maven-home)
         class-path (.format (+ "{}/edlab/eda/ace/{}/"
                                "ace-{}-jar-with-dependencies.jar")
-                            maven-home "0.0.1" "0.0.1")]
+                            maven-home __version__ __version__)]
     (if (and (os.path.isfile class-path)
           (os.access class-path os.R-OK))
       class-path

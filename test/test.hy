@@ -1,4 +1,7 @@
 (import os)
+(import csv)
+(import yaml)
+(import json)
 (import [numpy :as np])
 (import [pandas :as pd])
 (import [datetime [datetime :as dt]])
@@ -17,6 +20,11 @@
       ckt-path  f"../ACE/ace/resource/xh035-3V3/op2")
 
 (setx op (ac.single-ended-opamp ckt-path :pdk-path [pdk-path] :sim-path sim-path))
+(ac.evaluate-circuit op)
+
+(lfor f ["yaml" "json" "csv"] (ac.dump-state op f"foo.{f}"))
+
+(lfor f ["yaml" "json" "csv"] (ac.load-state op f"foo.{f}"))
 
 
 (pp (setx ros (ac.evaluate-circuit op :blocklist (ac.simulation-analyses op))))
@@ -31,6 +39,10 @@
 
 (pp (setx ip (ac.initial-sizing op)))
 (pp (setx rp (ac.random-sizing op)))
+
+(with [jf (open "./perfomance.json" "w")]
+  (json.dump (ac.current-performance jf)))
+
 
 (reduce (fn [df p]
     (->> p (ac.simulate op) (df.append :ignore-index True)))

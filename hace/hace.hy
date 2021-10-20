@@ -1,3 +1,7 @@
+(import os)
+(import csv)
+(import json)
+(import yaml)
 (import importlib)
 (import [functools [partial]])
 
@@ -8,6 +12,7 @@
 (require [hy.contrib.walk [let]])
 (require [hy.contrib.loop [loop]])
 (require [hy.extra.anaphoric [*]])
+(import [hy.contrib.pprint [pp pprint]])
 
 (import [.util [*]])
 
@@ -95,11 +100,73 @@
   """
   (-> amp (.getInitialSizingParameters) (jmap-to-dict)))
 
-(defn parameter-identifiers ^(of list str) [amp]
+(defn sizing-identifiers ^(of list str) [amp]
   """
   A list of available sizing parameters for a given OP-Amp
   """
+  (let [ap (parameter-identifiers amp)]
+    (list (filter (fn [p] (-> p (first) (in ["W" "L" "M"]) )) ap))))
+
+(defn parameter-identifiers ^(of list str) [amp]
+  """
+  A list of all available netlist parameters for a given OP-Amp
+  """
   (-> amp (.getParameters) (jsa-to-list)))
 
-(defn simulation-analyses  [amp]
+(defn simulation-analyses ^(of list str) [amp]
   (-> amp (.getAnalyses) (jsa-to-list)))
+
+(defn dump-state ^(of dict str float) [amp &optional ^str [file-name None]]
+  """
+  Returns the current state dict and dumps it to a file, if a `file-name` is
+  specified. Supported formats are `csv`, `json` and `yaml`.
+  """
+
+  (let [state-dict (| (current-parameters amp) (current-performance amp))
+        file-format     (-> file-name (os.path.splitext) (second))]
+
+        (when file-name
+          (with [f (open file-name "w")]
+            (cond [(= file-format ".json")
+                (json.dump state-dict f)]
+               [(= file-format ".yaml")
+                (yaml.dump state-dict f)]
+               [(= file-format ".csv")
+                (let [w (csv.DictWriter f :fieldnames (list (.keys state-dict)))]
+                    (.writeheader w) (.writerow w state-dict))]
+               [True
+                (raise (ValueError errno.EINVAL
+                       (os.strerror errno.EINVAL) 
+                       "Unnsupported file-format, has to be either json, yaml or csv."))])))
+
+    state-dict))
+
+(defn load-state ^(of dict str float) [amp ^str file-name]
+  """
+  Loads the given state into the given amplifier.
+  """
+  (unless (os.path.exists file-name)
+    (raise (FileNotFoundError errno.ENOENT 
+                              (os.strerror errno.ENOENT) 
+                              file-name)))
+
+  (let [file-format (-> file-name (os.path.splitext) (second))
+
+        state-dict (with [f (open file-name "r")]
+                    (cond [(= file-format ".json")
+                        (json.load f)]
+                       [(= file-format ".yaml")
+                        (yaml.full-load f)]
+                       [(= file-format ".csv")
+                        (dfor (, k v) (.items (first (csv.DictReader f))) 
+                          [k (float v)])]
+                       [True
+                        (raise (ValueError errno.EINVAL
+                               (os.strerror errno.EINVAL) 
+                               "Unnsupported file-format, has to be either json, yaml or csv."))]))
+        
+        sizing-dict     (dfor p (sizing-identifiers amp) [p (get state-dict p)])
+
+        perfomance-dict (evaluate-circuit amp :params sizing-dict) ]
+    
+    (| (current-parameters amp) (current-performance amp))))

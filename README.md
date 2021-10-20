@@ -38,21 +38,40 @@ and corresponding `.json` as seen in the examples for
 
 ## API
 
-```python
-single_ended_opamp( ckt_path: str                       # Path to testbench dir
-                  , pdk_path: Optional[List[str]] = []  # Path to PDK 
-                  , sim-path: Optional[str] = "/tmp"    # Path to store results
-                  ) => amplifier                        # Returns amplifier obj
-```
+Create an amplifier object:
 
 ```python
-evaluate_circuit( amplifier                             # Amplifier object
-                , params: Optional[Dict[str, float]]    # Sizing parameters
-                ) => Dict[str, float]                   # Returns performance
+amp = single_ended_opamp( ckt_path: str                       # Path to testbench dir
+                        , pdk_path: Optional[List[str]] = []  # Path to PDK 
+                        , sim-path: Optional[str] = "/tmp"    # Path to store results
+                        ) => amplifier                        # Returns amplifier obj
 ```
 
+Simulate it:
+
 ```python
-random_sizing(amplifier) => Dict[str, float] # Random sizing parameters
+res = evaluate_circuit( amp                                   # Amplifier object
+                      , params: Optional[Dict[str, float]]    # Sizing parameters
+                      ) => Dict[str, float]                   # Returns performance
+```
+
+Get random sizing parameters:
+
+```python
+rng = random_sizing(amp) => Dict[str, float]                  # Random sizing parameters
+```
+
+Save the current state to a file (`.json`, `.yaml` and `.csv` are currently
+supported):
+
+```python
+dump_state(amp, file_name="file.ext") => Dict[str, float]     # Dumps current state
+```
+
+Load a state (created with `dump_state`):
+
+```python
+load_state(amp, file_name: str) => Dict[str, float]           # Loads the given state 
 ```
 
 ## Further Reading
