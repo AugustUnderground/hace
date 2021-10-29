@@ -24,16 +24,16 @@
 (unless (importlib.util.find_spec "edlab")
     (jpype.addClassPath (default-class-path)))
 
-(import [edlab.eda.ace [ SingleEndedOpampEnvironment ]])
+(import [edlab.eda.ace [SingleEndedOpampEnvironment Nand4Environment]])
 (import [java.util.HashSet :as HashSet])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn make-amp [amp ^str sim-path ^(of list str) pdk-path ^str ckt-path]
+(defn make-env [env ^str sim-path ^(of list str) pdk-path ^str ckt-path]
   """
-  Meta function.
+  Meta function for creating objects.
   """
-  (amp.get sim-path pdk-path ckt-path))
+  (env.get sim-path pdk-path ckt-path))
 
 (defn single-ended-opamp [^str ckt-path &optional ^str [sim-path "/tmp"]
                                                   ^(of list str) [pdk-path []]]
@@ -41,6 +41,13 @@
   Create a single ended opamp with the given testbench and pdk.
   """
   (make-amp SingleEndedOpampEnvironment sim-path ckt-path pdk-path))
+
+(defn nand-4 [^str ckt-path &optional ^str [sim-path "/tmp"]
+                                      ^(of list str) [pdk-path []]]
+  """
+  Create a 4 gate nand inverter chain with the given testbench and pdk.
+  """
+  (make-env Nand4Environment sim-path ckt-path pdk-path))
 
 (defn set-parameter ^(of dict str float) [amp ^str param ^float value]
   """
@@ -72,7 +79,7 @@
 
 (defn current-performance ^(of dict str float) [amp]
   """
-  **IMPURE**. Returns the current performance of the circuit.
+  Returns the current performance of the circuit.
   """
   (-> amp (.getPerformanceValues) (jmap-to-dict)))
 
@@ -82,15 +89,23 @@
   """
   (jsa-to-list (.getPerformanceIdentifiers amp (HashSet blocklist))))
 
+(defn current-sizing ^(of dict str float) [amp]
+  """
+  Get dictionary with current sizing parameters.
+  """
+  (let [cp (-> amp (.getParameterValues) (jmap-to-dict))]
+    (dfor s (sizing-identifiers amp)
+      [s (get cp s)])))
+
 (defn current-parameters ^(of dict str float) [amp]
   """
-  **IMPURE**. Returns the sizing parameters currently in the netlist.
+  Returns the sizing parameters currently in the netlist.
   """
   (-> amp (.getParameterValues) (jmap-to-dict)))
 
 (defn random-sizing ^(of dict str float) [amp]
   """
-  **IMPURE**. Returns random sizing parameters.
+  Returns random sizing parameters.
   """
   (-> amp (.getRandomSizingParameters) (jmap-to-dict)))
 
@@ -168,5 +183,4 @@
         sizing-dict     (dfor p (sizing-identifiers amp) [p (get state-dict p)])
 
         perfomance-dict (evaluate-circuit amp :params sizing-dict) ]
-    
     (| (current-parameters amp) (current-performance amp))))

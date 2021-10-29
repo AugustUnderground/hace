@@ -1,6 +1,7 @@
 import hy
 
 from .hace import single_ended_opamp      \
+                , nand_4                  \
                 , set_parameter           \
                 , set_parameters          \
                 , evaluate_circuit        \
@@ -9,6 +10,7 @@ from .hace import single_ended_opamp      \
                 , performance_identifiers \
                 , random_sizing           \
                 , initial_sizing          \
+                , current_sizing          \
                 , current_parameters      \
                 , parameter_identifiers   \
                 , sizing_identifiers      \

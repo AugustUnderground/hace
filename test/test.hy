@@ -13,19 +13,31 @@
 
 (setv HOME       (os.path.expanduser "~")
       time-stamp (-> dt (.now) (.strftime "%H%M%S-%y%m%d"))
-      nmos-path f"../models/xh035-nmos"
-      pmos-path f"../models/xh035-pmos"
-      sim-path f"{HOME}/Workspace/sim"
-      pdk-path  f"/mnt/data/pdk/XKIT/xh035/cadence/v6_6/spectre/v6_6_2/mos"
-      ckt-path  f"../ACE/ace/resource/xh035-3V3/op2")
+      nmos-path  f"../models/xh035-nmos"
+      pmos-path  f"../models/xh035-pmos"
+      sim-path   f"{HOME}/Workspace/sim"
+      pdk-path   f"/mnt/data/pdk/XKIT/xh035/cadence/v6_6/spectre/v6_6_2/mos"
+      amp-path   f"../ACE/ace/resource/xh035-3V3/op4"
+      inv-path   f"../ACE/ace/resource/xh035-3V3/nand4")
+
+(setx inv (ac.nand-4 inv-path :pdk-path [pdk-path] :sim-path sim-path))
 
 (setx op (ac.single-ended-opamp ckt-path :pdk-path [pdk-path] :sim-path sim-path))
-(ac.evaluate-circuit op)
+(ac.evaluate-circuit op :blocklist ["xf" "tran"])
+
+(pp
+  (dfor p (filter #%(.islower (first %1)) (ac.performance-identifiers op))
+    [p (get (ac.current-performance op) p)]))
+
+(pp
+  (dfor p (filter #%(.islower (first %1)) (.keys (ac.current-performance op)))
+    [p (get (ac.current-performance op) p)]))
+
+(pp (ac.performance-identifiers op))
 
 (lfor f ["yaml" "json" "csv"] (ac.dump-state op f"foo.{f}"))
 
 (lfor f ["yaml" "json" "csv"] (ac.load-state op f"foo.{f}"))
-
 
 (pp (setx ros (ac.evaluate-circuit op :blocklist (ac.simulation-analyses op))))
 (pp (setx ros (ac.evaluate-circuit op :blocklist ["stb" "ac" "dc1" "dc4" "dc3" "noise" "dcmatch" "tran" "dcop" "xf"])))
