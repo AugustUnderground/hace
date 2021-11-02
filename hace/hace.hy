@@ -40,7 +40,7 @@
   """
   Create a single ended opamp with the given testbench and pdk.
   """
-  (make-amp SingleEndedOpampEnvironment sim-path ckt-path pdk-path))
+  (make-env SingleEndedOpampEnvironment sim-path ckt-path pdk-path))
 
 (defn nand-4 [^str ckt-path &optional ^str [sim-path "/tmp"]
                                       ^(of list str) [pdk-path []]]
