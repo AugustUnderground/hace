@@ -62,7 +62,7 @@
   """
   Change a single parameter. Returns the current sizing.
   """
-  (amp.set param value)
+  (env.set param value)
   (current-parameters env))
 
 (defn set-parameters [env ^(of dict str float) param-dict]
