@@ -18,9 +18,14 @@
       sim-path   f"{HOME}/Workspace/sim"
       pdk-path   f"/mnt/data/pdk/XKIT/xh035/cadence/v6_6/spectre/v6_6_2/mos"
       amp-path   f"../ACE/ace/resource/xh035-3V3/op4"
-      inv-path   f"../ACE/ace/resource/xh035-3V3/nand4")
+      inv-path   f"../ACE/ace/resource/xh035-3V3/nand4"
+      st1-path   f"../ACE/ace/resource/xh035-3V3/st1")
+
+(setx st (ac.schmitt-trigger st1-path :pdk-path [pdk-path] :sim-path sim-path))
+(pp (ac.evaluate-circuit st ))
 
 (setx inv (ac.nand-4 inv-path :pdk-path [pdk-path] :sim-path sim-path))
+(ac.evaluate-circuit inv )
 
 (setx op (ac.single-ended-opamp ckt-path :pdk-path [pdk-path] :sim-path sim-path))
 (ac.evaluate-circuit op :blocklist ["xf" "tran"])

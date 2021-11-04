@@ -2,6 +2,7 @@ import hy
 
 from .hace import single_ended_opamp      \
                 , nand_4                  \
+                , schmitt_trigger         \
                 , set_parameter           \
                 , set_parameters          \
                 , evaluate_circuit        \
