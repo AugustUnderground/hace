@@ -47,7 +47,7 @@
   Convert Java HashMap to native Python dictionary.
   """
   (dfor (, k v) (.items (dict jmap))
-    [(str k) v.real]))
+    [(str k) (if (hasattr v "real") v.real (jmap-to-dict v)) ]))
 
 (defn jna-to-list ^list [jna]
   """
