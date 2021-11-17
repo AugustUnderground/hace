@@ -83,14 +83,16 @@
   Functionally evaluate a given amplifier.
   """
   (-> env (set-parameters params) 
-          (.simulate (HashSet blocklist)) 
+          (.simulate (HashSet blocklist))
           (current-performance)))
 
 (defn current-performance ^(of dict str float) [env]
   """
-  Returns the current performance of the circuit.
+  Returns the current performance of the circuit. Values not present for
+  whatever reason will be filled with 0.
   """
-  (-> env (.getPerformanceValues) (jmap-to-dict)))
+  (| (dict (zip (performance-identifiers env) (repeat 0)))
+     (-> env (.getPerformanceValues) (jmap-to-dict))))
 
 (defn performance-identifiers ^(of list str) [env &optional ^list [blocklist []]]
   """
