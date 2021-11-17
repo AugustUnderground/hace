@@ -15,12 +15,14 @@
       time-stamp (-> dt (.now) (.strftime "%H%M%S-%y%m%d"))
       nmos-path  f"../models/xh035-nmos"
       pmos-path  f"../models/xh035-pmos"
+      tech       f"gpdk180-1V8"
+      op-id      f"op9"
       sim-path   f"{HOME}/Workspace/sim"
-      pdk-path   f"/mnt/data/pdk/XKIT/xh035/cadence/v6_6/spectre/v6_6_2/mos")
-      
-(setv amp-path   f"../ACE/ace/resource/xh035-3V3/op4")
-(setv inv-path   f"../ACE/ace/resource/xh035-3V3/nand4")
-(setv st1-path   f"../ACE/ace/resource/xh035-3V3/st1")
+      pdk-path   f"{HOME}/.ace/{tech}/pdk")
+
+(setv amp-path   f"{HOME}/.ace/{tech}/{op-id}")
+(setv inv-path   f"{HOME}/.ace/{tech}/nand4")
+(setv st1-path   f"{HOME}/.ace/{tech}/st1")
 
 (setx st (ac.schmitt-trigger st1-path :pdk-path [pdk-path] :sim-path sim-path))
 (pp (ac.evaluate-circuit st ))
@@ -29,11 +31,8 @@
 (ac.evaluate-circuit inv )
 
 
-(defmacro == [a b] (<= (/ (abs (- a b)) b) 1e-3))
-
-
 (setx op (ac.single-ended-opamp amp-path :pdk-path [pdk-path] :sim-path sim-path))
-(setv foo (ac.evaluate-circuit op ))
+(setx foo (ac.evaluate-circuit op ))
 
 (pp
   (dfor p (filter #%(.islower (first %1)) (ac.performance-identifiers op))
