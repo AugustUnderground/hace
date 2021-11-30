@@ -26,7 +26,8 @@
                                                                             ;;
 (import [edlab.eda.ace [ SingleEndedOpampEnvironment                        ;;
                          Nand4Environment                                   ;;
-                         SchmittTriggerEnvironment]])                       ;;
+                         SchmittTriggerEnvironment                          ;;
+                         Parameter ]])                                      ;;
 (import [java.util.HashSet :as HashSet])                                    ;;
                                                                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -138,6 +139,13 @@
   A list of all available netlist parameters for a given OP-Amp
   """
   (-> env (.getParameters) (jsa-to-list)))
+
+(defn parameter-dict [env]
+  """
+  Turn parameters into a nested dict
+  """
+  (dfor (, k v) (-> env (.getParameters) (dict) (.items))
+    [(str k) (jparam-to-dict v)]))
 
 (defn simulation-analyses ^(of list str) [env]
   (-> env (.getAnalyses) (jsa-to-list)))

@@ -42,6 +42,17 @@
                                 (os.strerror errno.ENOENT) 
                                 class-path)))))
 
+(defn jparam-to-dict ^dict [jparam]
+  """
+  Convert a parameter to a dict.
+  """
+  { ;"name"   (str (.getName jparam))
+    "grid"   (float (.getGrid jparam))
+    "init"   (float (.getInit jparam))
+    "max"    (float (.getMax jparam))
+    "min"    (float (.getMin jparam))
+    "sizing" (bool (.isSizingParameter jparam)) })
+
 (defn jmap-to-dict ^dict [jmap]
   """
   Convert Java HashMap to native Python dictionary.

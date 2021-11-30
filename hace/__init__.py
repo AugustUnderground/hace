@@ -14,6 +14,7 @@ from .hace import single_ended_opamp      \
                 , current_sizing          \
                 , current_parameters      \
                 , parameter_identifiers   \
+                , parameter_dict          \
                 , sizing_identifiers      \
                 , load_state              \
                 , dump_state              \
