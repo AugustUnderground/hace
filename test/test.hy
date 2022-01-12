@@ -20,11 +20,17 @@
 (setv toc (.time time))
 (print f"Evaluating op2 took {(- toc tic):.4}s.")
 
-(setv num-envs 666)
+(setv num-envs 32)
 (setx ops (ac.make-same-env-pool num-envs "op2" "xh035-3V3"))
 
 (setv tic (.time time))
 (setv ops-res (->> ops (ac.random-sizing-pool) (ac.evaluate-circuit-pool ops)))
-;(setv ops-res (->> ops (ac.random-sizing-pool) (ac.set-parameters-pool ops)))
+(setv toc (.time time))
+(print f"Evaluating {num-envs} op2's took {(- toc tic):.4}s.")
+
+(setv num-envs 666)
+(setx ops (ac.make-same-env-pool num-envs "op2" "xh035-3V3"))
+(setv tic (.time time))
+(setv ops-res (->> ops (ac.random-sizing-pool) (ac.evaluate-circuit-pool ops)))
 (setv toc (.time time))
 (print f"Evaluating {num-envs} op2's took {(- toc tic):.4}s.")

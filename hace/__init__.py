@@ -1,9 +1,6 @@
 import hy
 
-from .hace import single_ended_opamp      \
-                , nand_4                  \
-                , schmitt_trigger         \
-                , make_env                \
+from .hace import make_env                \
                 , make_env_pool           \
                 , make_same_env_pool      \
                 , set_parameter           \
@@ -24,7 +21,8 @@ from .hace import single_ended_opamp      \
                 , parameter_dict          \
                 , sizing_identifiers      \
                 , load_state              \
-                , dump_state
+                , dump_state              \
+                , is_pool_env
 
 from .util import __name__      \
                 , __version__   \

@@ -103,6 +103,13 @@
         sims (-> sim (repeat num-envs) (list))]
     (make-env-pool ace-ids ace-backends pdks ckts sims)))
 
+(defn is-pool-env [env]
+  """
+  Function for checking whether an environment is pooled or not. This avoids
+  exposing AcePoolEnvironment.
+  """
+  (-> env (type) (is AcePoolEnvironment)))
+
 (defn set-parameter ^(of dict str float) [env ^str param ^float value]
   """
   Change a single parameter. Returns the current sizing.
