@@ -103,35 +103,6 @@
         sims (-> sim (repeat num-envs) (list))]
     (make-env-pool ace-ids ace-backends pdks ckts sims)))
 
-;;;;;;;;; REMOVE THIS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn single-ended-opamp [^str ckt-path &optional ^str [sim-path "/tmp"]
-                                                  ^(of list str) [pdk-path []]]
-  """
-  Create a single ended opamp with the given testbench and pdk.
-  """
-  (warnings.warn f"single-ended-opamp is deprecated, and will be removed, use make-env instead" 
-                 DeprecationWarning)
-  (SingleEndedOpampEnvironment.get sim-path ckt-path pdk-path))
-
-(defn nand-4 [^str ckt-path &optional ^str [sim-path "/tmp"]
-                                      ^(of list str) [pdk-path []]]
-  """
-  Create a 4 gate nand inverter chain with the given testbench and pdk.
-  """
-  (warnings.warn f"nand-4 is deprecated, and will be removed, use make-env instead" 
-                 DeprecationWarning)
-  (Nand4Environment.get sim-path ckt-path pdk-path))
-
-(defn schmitt-trigger [^str ckt-path &optional ^str [sim-path "/tmp"]
-                                      ^(of list str) [pdk-path []]]
-  """
-  Create a schmitt trigger with the given testbench and pdk.
-  """
-  (warnings.warn f"single-ended-opamp is deprecated, and will be removed, use make-env instead" 
-                 DeprecationWarning)
-  (SchmittTriggerEnvironment.get sim-path ckt-path pdk-path))
-;;;;;;;;; REMOVE THIS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (defn set-parameter ^(of dict str float) [env ^str param ^float value]
   """
   Change a single parameter. Returns the current sizing.
