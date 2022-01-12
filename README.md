@@ -4,9 +4,6 @@ Minimal functional interface to [AC²E](https://github.com/matthschw/ace) for Hy
 
 ## Installation
 
-Make sure [AC²E](https://github.com/matthschw/ace) and all dependencies are
-installed.
-
 Install with `pip`:
 
 ```bash
@@ -21,43 +18,103 @@ $ pushd hace
 $ pip install .
 ```
 
+### Dependencies
+
+Make sure [AC²E](https://github.com/matthschw/ace) and all dependencies are
+installed.
+
+### Backend Access
+
+One way is to create a symlink from the `resource` directory of the AC²E
+repository, which contains all the backends as git submodules, to `~/.ace`.
+`hace` will automatically look there if `pdk_path` and `ckt_path` are not
+specified.
+
+```bash
+$ ln -s /path/to/ace/resource $HOME/.ace
+```
+
+It should look something like this:
+
+```
+$HOME/.ace
+├── sky130-1V8
+│   ├── op1
+│   │   ├── input.scs
+│   │   └── properties.json
+│   ├── ...
+│   ├── pdk
+│   │   ├── cells
+│   │   │   ├── nfet_01v8
+│   │   │   │   ├── sky130_fd_pr__nfet_01v8__mismatch.corner.scs
+│   │   │   │   ├── sky130_fd_pr__nfet_01v8__tt.corner.scs
+│   │   │   │   └── sky130_fd_pr__nfet_01v8__tt.pm3.scs
+│   │   │   └── pfet_01v8
+│   │   │       ├── sky130_fd_pr__pfet_01v8__mismatch.corner.scs
+│   │   │       ├── sky130_fd_pr__pfet_01v8__tt.corner.scs
+│   │   │       └── sky130_fd_pr__pfet_01v8__tt.pm3.scs
+│   │   ├── models
+│   │   │   ├── all.scs
+│   │   │   ├── corners
+│   │   │   │   └── tt
+│   │   │   │       └── nofet.scs
+│   │   │   ├── parameters
+│   │   │   │   └── lod.scs
+│   │   │   └── sky130.scs
+│   │   ├── README.md
+│   │   └── tests
+│   │       ├── nfet_01v8_tt.scs
+│   │       └── pfet_01v8_tt.scs
+└── ...
+```
+
+#### Environment Variables
+
+Alternatively you can set environment variables, telling `hace` where to find
+the pdk and testbenches.
+
+```bash
+$ export ACE_BACKEND=/path/to/ace/resource
+$ export ACE_PDK=/path/to/ace/resource/<tech>/pdk
+```
+
+Where `<tech>` has to be a valid backend such as `xh035-3V3` for example.
+
+
+#### Explicit
+
+Otherwise paths have to be given explicitly to the `make_env` function via the
+kwargs `pdk_path` and `ckt_path`.
+
 ## Getting Started
+
+Please refer to the [AC²E](https://github.com/matthschw/ace) documentation for
+environment IDs and available backends. 
 
 ```python
 import hace as ac
 
-amp = ac.single_ended_opamp([path_to_pdk}], path_to_netlist)
+amp = ac.make_env('op2', 'xh035-3V3') 
 siz = ac.random_sizing(amp)
-res = ac.evaluate_circuit(amp, siz)
+res = ac.evaluate_circuit(amp, params = siz)
 ```
-
-Where `path_to_pdk` is optional, if your netlist requries it, otherwise give an
-empty list. `path_to_netlist` should point to a directory with an `input.scs`
-and corresponding `.json` as seen in the examples for
-[AC²E](https://github.com/matthschw/ace).
 
 ## API
 
-Create an amplifier object:
+Create an ace environment object:
 
 ```python
-amp = single_ended_opamp( ckt_path: str                       # Path to testbench dir
-                        , pdk_path: Optional[List[str]] = []  # Path to PDK 
-                        , sim-path: Optional[str] = "/tmp"    # Path to store results
-                        ) => amplifier                        # Returns amplifier obj
+amp = make_env( ace_id: str                         # ACE Environment ID
+              , ace_backend: str                    # ACE Backend ID
+              , pdk_path: Optional[List[str]] = []  # Path to ace backend
+              , ckt_path: Optional[str] = None      # Path to testbench
+              , sim_path: Optional[str] = None      # Path to store results
+              ) => amplifier                        # Returns ace env obj
 ```
 
-Create a 4 gate NAND inverter chain:
-
-```python
-inv = nand_4( ckt_path: str                       # Path to testbench dir
-            , pdk_path: Optional[List[str]] = []  # Path to PDK 
-            , sim-path: Optional[str] = "/tmp"    # Path to store results
-            ) => inverter                         # Returns amplifier obj
-```
-
-The current state of a circuit can be evaluated or parameters therein can be
-overwritten with the following function:
+Where `ace_id` can be any supported AC²E environment id such as `op1 .. 9`,
+`nand4` or `st1`. And `ace_backend` should be a supported/installed backend,
+such as `sky130-1V8`.
 
 ```python
 res = evaluate_circuit( amp                                   # Amplifier object
@@ -110,6 +167,57 @@ Load a state (created with `dump_state`):
 ```python
 load_state(amp, file_name: str) => Dict[str, float]           # Loads the given state 
 ```
+
+#### Concurrent / Parallel Programming
+
+The concurrent API acts much the same as the default one. Create pooled
+amplifier object:
+
+```python
+amps = ac.make_env_pool( ace_ids: List[str],
+                       , ace_backends: List[str]
+                       , pdk_paths: Optional[List[List[str]]] = [[]]
+                       , ckt_paths: Optional[List[str]]       = []
+                       , sim_paths: Optional[List[str]]       = ["/tmp", ..] 
+                       ) => amplifier_pool
+```
+
+There is a short hand for creating a pool of the same environment.
+
+```python
+envs = ac.make_same_env_pool( num_envs: int
+                            , ace_id: str,
+                            , ace_backends: str
+                            , pdk_paths: Optional[List[str]] = []
+                            , ckt_paths: Optional[str]       = []
+                            , sim_paths: Optional[str]       = "/tmp"
+                            ) => amplifier_pool
+```
+
+The `AcePoolEnvironment` is a
+[namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple)
+with an `envs` and `pool` field. Where the former is a dict mapping an ID to an
+environment.
+
+Parameters of environments in a pool can be set with a dict mapping an ID to a
+dict that is then passed to `set_parameters`.
+
+```python
+envs = ac.set_parameters_pool( pool_env
+                             , pool_params dict[int, dict[str, float]]
+                             ) => pool_env
+```
+
+An environment pool can be evaluated in a similar way.
+
+```python
+ress = ac.evaluate_circuit_pool( pool_env
+                               , pool_params Optional[dict[int, dict[str, float]]] = {}
+                               , npar: int = len(os.shed_getaffinity(0)) // 2
+                               ) => simulation_results
+```
+
+So far the `blocklist` is not supported in pooled environments.
 
 ## Further Reading
 

@@ -3,7 +3,9 @@
 (import json)
 (import yaml)
 (import importlib)
+(import errno warnings)
 (import [functools [partial]])
+(import [collections [namedtuple]])
 
 (import jpype)
 (import jpype.imports)
@@ -27,37 +29,108 @@
 (import [edlab.eda.ace [ SingleEndedOpampEnvironment                        ;;
                          Nand4Environment                                   ;;
                          SchmittTriggerEnvironment                          ;;
+                         EnvironmentPool                                    ;;
                          Parameter ]])                                      ;;
 (import [java.util.HashSet :as HashSet])                                    ;;
                                                                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn make-env [env ^str sim-path ^(of list str) pdk-path ^str ckt-path]
+(defn make-env [^str ace-id ^str ace-backend 
+        &optional ^(of list str) [pdk []] ^str [ckt None] ^str [sim None]]
   """
-  Meta function for creating objects.
+  Function for creating ACE environments for a given backend.
+    Example: `make_env('op1', 'xh035-3V3')`
   """
-  (env.get sim-path pdk-path ckt-path))
+  (let [HOME (os.path.expanduser "~")
+        pdk-path ;; Check for PDK
+          (cond [(and (all (lfor p pdk (and p (os.path.exists p)))) pdk)
+                  pdk]
+                [(in "ACE_PDK" os.environ) [(os.environ.get "ACE_PDK")]]
+                [(os.path.exists (.format "{}/.ace/{}/pdk" HOME ace-backend))
+                 [(.format "{}/.ace/{}/pdk" HOME ace-backend)]]
+                [True (raise (FileNotFoundError errno.ENOENT 
+                              (os.strerror errno.ENOENT) 
+                              (.format "No PDK found for {} and {}"
+                                       ace-id ace-backend)))])
+        ckt-path ;; Check ACE backend Testbench
+          (cond [(and ckt (os.path.exists ckt)) ckt]
+                [(in "ACE_BACKEND" os.environ) 
+                 (.format "{}/{}" (os.environ.get "ACE_BACKEND") ace-id)]
+                [(os.path.exists (.format "{}/.ace/{}/{}" HOME ace-backend ace-id))
+                 (.format "{}/.ace/{}/{}" HOME ace-backend ace-id)]
+                [True (raise (FileNotFoundError errno.ENOENT 
+                              (os.strerror errno.ENOENT) 
+                              (.format "No ACE Testbench found for {} in {}"
+                                       ace-id ace-backend)))])
+        sim-path ;; Check if path to a simlulation directory was given
+          (or sim "/tmp")
+        ace-env
+          (cond [(.startswith ace-id "op")   SingleEndedOpampEnvironment]
+                [(.startswith ace-id "st")   SchmittTriggerEnvironment]
+                [(.startswith ace-id "nand") Nand4Environment]
+                [True (raise (NotImplementedError errno.ENOSYS
+                              (os.strerror errno.ENOSYS) 
+                              (.format "{} is not a valid ACE id." ace-id)))])]
+    (ace-env.get sim-path ckt-path pdk-path)))
 
+;; Wrapper class for creating an Env Pool and keeping track of individual envs.
+(setv AcePoolEnvironment (namedtuple "AcePoolEnvironment" "envs pool"))
+
+(defn make-env-pool [^(of list str) ace-ids ^(of list str) ace-backends
+        &optional ^(of list (of list str)) [pdks (repeat [])] 
+                  ^(of list str) [ckts (repeat None)] 
+                  ^(of list str) [sims (repeat None)]]
+  """
+  Function for creating a pool of ACE environments.
+  """
+  (let [env-ids (-> ace-ids (len) (range))
+        envs (dfor (, env-id ace-id ace-backend pdk ckt sim) 
+                   (zip env-ids ace-ids ace-backends pdks ckts sims) 
+                   [env-id (make-env ace-id ace-backend pdk ckt sim)])
+        pool (EnvironmentPool)]
+    (for [e (.values envs)] (.add pool e))
+    (AcePoolEnvironment envs pool)))
+
+(defn make-same-env-pool [^int num-envs ^str ace-id ^str ace-backend
+        &optional ^(of list str) [pdk []] ^str [ckt None] ^str [sim None]]
+  """
+  Function for creating a pool of the same ACE environment, n times.
+  """
+  (let [ace-ids (-> ace-id (repeat num-envs) (list))
+        ace-backends (-> ace-backend (repeat num-envs) (list)) 
+        pdks (-> pdk (repeat num-envs) (list))
+        ckts (-> ckt (repeat num-envs) (list))
+        sims (-> sim (repeat num-envs) (list))]
+    (make-env-pool ace-ids ace-backends pdks ckts sims)))
+
+;;;;;;;;; REMOVE THIS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn single-ended-opamp [^str ckt-path &optional ^str [sim-path "/tmp"]
                                                   ^(of list str) [pdk-path []]]
   """
   Create a single ended opamp with the given testbench and pdk.
   """
-  (make-env SingleEndedOpampEnvironment sim-path ckt-path pdk-path))
+  (warnings.warn f"single-ended-opamp is deprecated, and will be removed, use make-env instead" 
+                 DeprecationWarning)
+  (SingleEndedOpampEnvironment.get sim-path ckt-path pdk-path))
 
 (defn nand-4 [^str ckt-path &optional ^str [sim-path "/tmp"]
                                       ^(of list str) [pdk-path []]]
   """
   Create a 4 gate nand inverter chain with the given testbench and pdk.
   """
-  (make-env Nand4Environment sim-path ckt-path pdk-path))
+  (warnings.warn f"nand-4 is deprecated, and will be removed, use make-env instead" 
+                 DeprecationWarning)
+  (Nand4Environment.get sim-path ckt-path pdk-path))
 
 (defn schmitt-trigger [^str ckt-path &optional ^str [sim-path "/tmp"]
                                       ^(of list str) [pdk-path []]]
   """
   Create a schmitt trigger with the given testbench and pdk.
   """
-  (make-env SchmittTriggerEnvironment sim-path ckt-path pdk-path))
+  (warnings.warn f"single-ended-opamp is deprecated, and will be removed, use make-env instead" 
+                 DeprecationWarning)
+  (SchmittTriggerEnvironment.get sim-path ckt-path pdk-path))
+;;;;;;;;; REMOVE THIS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn set-parameter ^(of dict str float) [env ^str param ^float value]
   """
@@ -71,21 +144,38 @@
   Set a parameter dictionary. (i.e. from `random-sizing`). Returns the current
   sizing.
   """
-  (ap-reduce 
-    (set-parameter env #* it)
-    (.items param-dict) 
-    (current-parameters env))
+  (for [(, p v) (.items param-dict)] (set-parameter env p v))
   env)
+
+(defn set-parameters-pool [pool-env pool-params]
+  """
+  Takes dict of the following shape:
+    { 'env_id': {'sizing_parameter': 'value
+                , ...  }
+    , ... }
+  """
+  (for [(, i ps) (.items pool-params)] 
+    (set-parameters (get pool-env.envs i) ps))
+  pool-env)
 
 (defn evaluate-circuit ^(of dict str float) 
     [env  &optional ^(of dict str float) [params {}]
                     ^list [blocklist []]]
   """
-  Functionally evaluate a given amplifier.
+  Evaluates a given ACE env.
   """
   (-> env (set-parameters params) 
           (.simulate (HashSet blocklist))
           (current-performance)))
+
+(defn evaluate-circuit-pool ^dict [pool-env &optional ^dict [pool-params {}]
+          ^int [npar (-> 0 (os.shed-getaffinity) (len) (// 2))]] 
+  """
+  Takes a dict of the same shape as `set_parameters_pool` and evaluates a given
+  ace env.
+  """
+  (-> pool-env (set-parameters-pool pool-params) (. pool) (.execute npar))
+  (current-performance-pool pool-env))
 
 (defn current-performance ^(of dict str float) [env]
   """
@@ -94,6 +184,13 @@
   """
   (| (dict (zip (performance-identifiers env) (repeat 0)))
      (-> env (.getPerformanceValues) (jmap-to-dict))))
+
+(defn current-performance-pool ^(of dict int (of dict str float)) [pool-env]
+  """
+  Returns the current performance of all circuits in the pool. Values not
+  present for whatever reason will be filled with 0.
+  """
+  (dfor (, i e) (.items pool-env.envs) [i (current-performance e)]))
 
 (defn performance-identifiers ^(of list str) [env &optional ^list [blocklist []]]
   """
@@ -121,11 +218,23 @@
   """
   (-> env (.getRandomSizingParameters) (jmap-to-dict)))
 
+(defn random-sizing-pool ^(of dict int (of dict str float)) [pool-env]
+  """
+  Returns random sizing parameters for a pool.
+  """
+  (dfor (, i env) (.items pool-env.envs) [i (random-sizing env)]))
+
 (defn initial-sizing ^(of dict str float) [env]
   """
   'Reasonable' initial sizing.
   """
   (-> env (.getInitialSizingParameters) (jmap-to-dict)))
+
+(defn initial-sizing-pool ^(of dict int (of dict str float)) [pool-env]
+  """
+  Returns 'reasonable' sizing parameters for a pool.
+  """
+  (dfor (, i env) (.items pool-env.envs) [i (initial-sizing env)]))
 
 (defn sizing-identifiers ^(of list str) [env]
   """
