@@ -103,6 +103,15 @@
         sims (-> sim (repeat num-envs) (list))]
     (make-env-pool ace-ids ace-backends pdks ckts sims)))
 
+(defn to-pool [env-list] 
+  """
+  Convert a list of ACE Environments to a Pooled Environment.
+  """
+  (let [envs (-> env-list (enumerate) (dict))
+      pool (EnvironmentPool)]
+    (for [e (.values envs)] (.add pool e))
+    (AcePoolEnvironment envs pool)))
+
 (defn is-pool-env [env]
   """
   Function for checking whether an environment is pooled or not. This avoids
