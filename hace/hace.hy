@@ -169,7 +169,7 @@
           (current-performance)))
 
 (defn evaluate-circuit-pool ^dict [pool-env &optional ^dict [pool-params {}]
-          ^int [npar (-> 0 (os.shed-getaffinity) (len) (// 2))]] 
+          ^int [npar (-> 0 (os.sched-getaffinity) (len) (// 2))]] 
   """
   Takes a dict of the same shape as `set_parameters_pool` and evaluates a given
   ace env.
