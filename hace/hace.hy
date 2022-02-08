@@ -151,9 +151,17 @@
   """
   Evaluates a given ACE env.
   """
-  (-> env (set-parameters params) 
-          (.simulate (HashSet blocklist))
-          (current-performance)))
+  ;;(-> env (set-parameters params) 
+  ;;        (.simulate (HashSet blocklist))
+  ;;        (current-performance)))
+  (try
+    (-> env (set-parameters params) 
+            (.simulate (HashSet blocklist)))
+    (except [java.lang.NullPointerException] 
+      (print f"Exception when trying to simulate!")
+      (dump-state env)
+      (current-performance env))
+    (else (current-performance env))))
 
 (defn evaluate-circuit-pool ^dict [pool-env &optional ^dict [pool-params {}]
           ^int [npar (-> 0 (os.sched-getaffinity) (len) (// 2))]] 
@@ -161,8 +169,15 @@
   Takes a dict of the same shape as `set_parameters_pool` and evaluates a given
   ace env.
   """
-  (-> pool-env (set-parameters-pool pool-params) (. pool) (.execute npar))
-  (current-performance-pool pool-env))
+  ;; (-> pool-env (set-parameters-pool pool-params) (. pool) (.execute npar))
+  ;; (current-performance-pool pool-env))
+  (try 
+    (-> pool-env (set-parameters-pool pool-params) (. pool) (.execute npar))
+    (except [java.lang.NullPointerException] 
+      (print f"Exception when trying to simulate pool!")
+      (lfor env pool-env.envs (dump-state env))
+      (current-performance-pool pool-env))
+    (else (current-performance-pool pool-env))))
 
 (defn current-performance ^(of dict str float) [env]
   """

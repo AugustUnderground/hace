@@ -28,6 +28,17 @@
 (setv toc (.time time))
 (print f"Evaluating {num-envs} op2's took {(- toc tic):.4}s.")
 
+(lfor p (.values ops-res) (get p "MND12:vth"))
+
+(setv num-envs 32)
+(setx envs (ac.make-same-env-pool num-envs "op2" "xh035-3V3"))
+
+(for [i (range 20)]
+  (setv tic (.time time))
+  (setv res (->> envs (ac.random-sizing-pool) (ac.evaluate-circuit-pool envs)))
+  (setv toc (.time time))
+  (print f"{i :03}: Evaluating {num-envs} op2's took {(- toc tic):.4}s."))
+
 (setv num-envs 3)
 (setx ops (ac.make-same-env-pool num-envs "op2" "xh035-3V3"))
 
