@@ -165,11 +165,12 @@
 
 (defn evaluate-circuit-unsafe ^dict [env &kwargs kwargs]
   """
-  Returns an empty dictionary if evaluation results are corrupt.
+  Returns whatever is availbale if evaluation results are corrupt.
   """
   (try
     (ac.evaluate-circuit env #** kwargs)
-    (except [e Exception] {})))
+    (except [e Exception] 
+      (current-performance env))))
 
 (defn evaluate-circuit-pool ^dict [pool-env &optional ^dict [pool-params {}]
           ^int [npar (-> 0 (os.sched-getaffinity) (len) (// 2))]] 
@@ -192,7 +193,8 @@
   """
   (try
     (ac.evaluate-circuit-pool pool-env #** kwargs)
-    (except [e Exception] {})))
+    (except [e Exception] 
+      (current-performance-pool pool-env))))
 
 (defn is-corrupted ^bool [env]
   """
