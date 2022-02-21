@@ -18,7 +18,7 @@
 
 (import [.util [*]])
 
-;; JVM HANDLING ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; JVM CONTAINMENT ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                                                             ;;
 (unless (.isJVMStarted jpype)                                               ;;
     (.startJVM jpype))                                                      ;;
@@ -31,7 +31,9 @@
                          SchmittTriggerEnvironment                          ;;
                          EnvironmentPool                                    ;;
                          Parameter ]])                                      ;;
+(import [edlab.eda.cadence.rc.session [UnableToStartSession]])              ;;
 (import [java.util.HashSet :as HashSet])                                    ;;
+(import [java.lang [NullPointerException RuntimeException]])                ;;
                                                                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -151,17 +153,14 @@
   """
   Evaluates a given ACE env.
   """
-  ;;(-> env (set-parameters params) 
-  ;;        (.simulate (HashSet blocklist))
-  ;;        (current-performance)))
-  (try
-    (-> env (set-parameters params) 
-            (.simulate (HashSet blocklist)))
-    (except [java.lang.NullPointerException] 
-      (print f"Exception when trying to simulate!")
-      (dump-state env)
-      (current-performance env))
-    (else (current-performance env))))
+  (if (-> env (set-parameters params) 
+              (.simulate (HashSet blocklist))
+              (is-corrupted)) 
+      (do (dump-state env) 
+          (raise (IOError errno.ENODATA 
+                          (os.strerror errno.ENODATA) 
+                          f"Simulation Results corrupted.")))
+      (current-performance env)))
 
 (defn evaluate-circuit-pool ^dict [pool-env &optional ^dict [pool-params {}]
           ^int [npar (-> 0 (os.sched-getaffinity) (len) (// 2))]] 
@@ -169,15 +168,37 @@
   Takes a dict of the same shape as `set_parameters_pool` and evaluates a given
   ace env.
   """
-  ;; (-> pool-env (set-parameters-pool pool-params) (. pool) (.execute npar))
-  ;; (current-performance-pool pool-env))
-  (try 
-    (-> pool-env (set-parameters-pool pool-params) (. pool) (.execute npar))
-    (except [java.lang.NullPointerException] 
-      (print f"Exception when trying to simulate pool!")
-      (lfor env pool-env.envs (dump-state env))
-      (current-performance-pool pool-env))
-    (else (current-performance-pool pool-env))))
+  (-> pool-env (set-parameters-pool pool-params) (. pool) (.execute npar))
+  (if (-> pool-env (any-corrupted-pool))
+      (do (lfor env pool-env.envs (dump-state env))
+          (raise (IOError errno.ENODATA 
+                          (os.strerror errno.ENODATA) 
+                          f"Simulation Results corrupted.")))
+      (current-performance-pool pool-env)))
+
+(defn is-corrupted ^bool [env]
+  """
+  Checks if the simulation results are corrupted.
+  """
+  (-> env (.isCorrupted ) (bool)))
+
+(defn is-corrupted-pool ^(of dict int bool) [pool-env]
+  """
+  Checks if environments within a pool are corrutped.
+  """
+  (dfor (, i e) (.items pool-env.envs) [i (.isCorrupted e)]))
+
+(defn any-corrupted-pool ^bool [pool-env]
+  """
+  Checks if any environment within a pool is corrupted.
+  """
+  (-> pool-env (is-corrupted-pool) (.values) (list) (any)))
+
+(defn all-corrupted-pool ^bool [pool-env]
+  """
+  Checks if all environments within a pool is corrupted.
+  """
+  (-> pool-env (is-corrupted-pool) (.values) (list) (all)))
 
 (defn current-performance ^(of dict str float) [env]
   """

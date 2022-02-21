@@ -24,7 +24,11 @@ from .hace import make_env                 \
                 , load_state               \
                 , dump_state               \
                 , to_pool                  \
-                , is_pool_env
+                , is_pool_env              \
+                , is_corrupted             \
+                , is_corrupted_pool        \
+                , any_corrupted_pool       \
+                , all_corrupted_pool       \
 
 from .util import __name__      \
                 , __version__   \

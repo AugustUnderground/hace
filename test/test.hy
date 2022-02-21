@@ -20,6 +20,20 @@
 (setv toc (.time time))
 (print f"Evaluating op2 took {(- toc tic):.4}s.")
 
+
+(setx op (ac.make-env "op2" "xh035-3V3" :pdk ["./"]))
+
+(setv foo (ac.evaluate-circuit op))
+
+(setx s (ac.random-sizing op))
+
+(ac.evaluate-circuit op s)
+
+(setv op2-res (->> op2 (ac.random-sizing) (ac.evaluate-circuit op2)))
+
+
+
+
 (setv num-envs 32)
 (setx ops (ac.make-same-env-pool num-envs "op2" "xh035-3V3"))
 
