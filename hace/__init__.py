@@ -30,7 +30,9 @@ from .hace import make_env                      \
                 , is_corrupted                  \
                 , is_corrupted_pool             \
                 , any_corrupted_pool            \
-                , all_corrupted_pool
+                , all_corrupted_pool            \
+                , AceCorruptionException        \
+                , AcePoolCorruptionException
 
 from .util import __name__                      \
                 , __version__                   \

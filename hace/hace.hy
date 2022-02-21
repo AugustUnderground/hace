@@ -38,6 +38,18 @@
                                                                             ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defclass AceCorruptionException [Exception]
+  (defn __init__ [self env]
+    (setv self.env env))
+  (defn __str__ [self]
+    (self.env.toString)))
+
+(defclass AcePoolCorruptionException [Exception]
+  (defn __init__ [self pool-env]
+    (setv self.envs pool-env))
+  (defn __str__ [self]
+    (lfor self.envs.pool.toString)))
+
 (defn make-env [^str ace-id ^str ace-backend 
         &optional ^(of list str) [pdk []] ^str [ckt None] ^str [sim None]]
   """
@@ -158,9 +170,10 @@
               (.simulate (HashSet blocklist))
               (is-corrupted)) 
       (do (dump-state env f"/tmp/hace_dump_0_{(time)}.json") 
-          (raise (IOError errno.ENODATA 
-                          (os.strerror errno.ENODATA) 
-                          f"Simulation Results corrupted.")))
+          ;(raise (IOError errno.ENODATA 
+          ;                (os.strerror errno.ENODATA) 
+          ;                f"Simulation Results corrupted."))
+          (raise (AceCorruptionException env)))
       (current-performance env)))
 
 (defn evaluate-circuit-unsafe ^dict [env &kwargs kwargs]
@@ -182,9 +195,10 @@
   (if (-> pool-env (any-corrupted-pool))
       (do (lfor (, i env) (.items pool-env.envs) 
                 (dump-state env f"/tmp/hace_dump_{i}_{(time)}.json"))
-          (raise (IOError errno.ENODATA 
-                          (os.strerror errno.ENODATA) 
-                          f"Simulation Results corrupted.")))
+          ;(raise (IOError errno.ENODATA 
+          ;                (os.strerror errno.ENODATA) 
+          ;                f"Simulation Results corrupted."))
+          (raise (AcePoolCorruptionException pool-env)))
       (current-performance-pool pool-env)))
 
 (defn evaluate-circuit-pool-unsafe ^dict [pool-env &kwargs kwargs]
