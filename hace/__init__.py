@@ -8,6 +8,7 @@ from .hace import make_env                      \
                 , set_parameters_pool           \
                 , evaluate_circuit              \
                 , evaluate_circuit_unsafe       \
+                , evaluate_circuit_pool         \
                 , evaluate_circuit_pool_unsafe  \
                 , simulation_analyses           \
                 , current_performance           \
