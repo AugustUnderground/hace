@@ -23,7 +23,11 @@
 
 (setx op (ac.make-env "op2" "xh035-3V3" :pdk ["./"]))
 
-(setv foo (ac.evaluate-circuit op))
+
+(try
+  (setx foo (ac.evaluate-circuit op))
+  (except [e Exception]
+    {}))
 
 (setx s (ac.random-sizing op))
 

@@ -3,6 +3,7 @@
 (import json)
 (import yaml)
 (import importlib)
+(import [time [time]])
 (import errno warnings)
 (import [functools [partial]])
 (import [collections [namedtuple]])
@@ -156,11 +157,19 @@
   (if (-> env (set-parameters params) 
               (.simulate (HashSet blocklist))
               (is-corrupted)) 
-      (do (dump-state env) 
+      (do (dump-state env f"/tmp/hace_dump_0_{(time)}.json") 
           (raise (IOError errno.ENODATA 
                           (os.strerror errno.ENODATA) 
                           f"Simulation Results corrupted.")))
       (current-performance env)))
+
+(defn evaluate-circuit-unsafe ^dict [env &kwargs kwargs]
+  """
+  Returns an empty dictionary if evaluation results are corrupt.
+  """
+  (try
+    (ac.evaluate-circuit env #** kwargs)
+    (except [e Exception] {})))
 
 (defn evaluate-circuit-pool ^dict [pool-env &optional ^dict [pool-params {}]
           ^int [npar (-> 0 (os.sched-getaffinity) (len) (// 2))]] 
@@ -170,11 +179,20 @@
   """
   (-> pool-env (set-parameters-pool pool-params) (. pool) (.execute npar))
   (if (-> pool-env (any-corrupted-pool))
-      (do (lfor env pool-env.envs (dump-state env))
+      (do (lfor (, i env) (.items pool-env.envs) 
+                (dump-state env f"/tmp/hace_dump_{i}_{(time)}.json"))
           (raise (IOError errno.ENODATA 
                           (os.strerror errno.ENODATA) 
                           f"Simulation Results corrupted.")))
       (current-performance-pool pool-env)))
+
+(defn evaluate-circuit-pool-unsafe ^dict [pool-env &kwargs kwargs]
+  """
+  Returns an empty dictionary if evaluation results are corrupt.
+  """
+  (try
+    (ac.evaluate-circuit-pool pool-env #** kwargs)
+    (except [e Exception] {})))
 
 (defn is-corrupted ^bool [env]
   """
