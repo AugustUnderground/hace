@@ -20,6 +20,18 @@
 (setv toc (.time time))
 (print f"Evaluating op2 took {(- toc tic):.4}s.")
 
+(pp (ac.evaluate-circuit op2 (ac.initial-sizing op2)))
+
+
+
+(setv observation (ac.evaluate-circuit op2))
+
+
+
+
+
+
+(pp (dfor (, k v) (.items (ac.current-performance op2)) :if (.islower (get k 0)) [k v]))
 
 (setx op (ac.make-env "op2" "xh035-3V3" :pdk ["./"]))
 

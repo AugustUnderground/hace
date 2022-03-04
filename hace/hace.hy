@@ -170,9 +170,6 @@
               (.simulate (HashSet blocklist))
               (is-corrupted)) 
       (do (dump-state env f"/tmp/hace_dump_0_{(time)}.json") 
-          ;(raise (IOError errno.ENODATA 
-          ;                (os.strerror errno.ENODATA) 
-          ;                f"Simulation Results corrupted."))
           (raise (AceCorruptionException env)))
       (current-performance env)))
 
@@ -195,9 +192,6 @@
   (if (-> pool-env (any-corrupted-pool))
       (do (lfor (, i env) (.items pool-env.envs) 
                 (dump-state env f"/tmp/hace_dump_{i}_{(time)}.json"))
-          ;(raise (IOError errno.ENODATA 
-          ;                (os.strerror errno.ENODATA) 
-          ;                f"Simulation Results corrupted."))
           (raise (AcePoolCorruptionException pool-env)))
       (current-performance-pool pool-env)))
 
@@ -263,11 +257,23 @@
     (dfor s (sizing-identifiers env)
       [s (get cp s)])))
 
+(defn current-sizing-pool ^(of dict int (of dict str float)) [pool-env]
+  """
+  Get dictionary with current sizing parameters for all envs in pool.
+  """
+  (dfor (, i env) (.items pool-env.envs) [i (current-sizing env)]))
+
 (defn current-parameters ^(of dict str float) [env]
   """
   Returns the sizing parameters currently in the netlist.
   """
   (-> env (.getParameterValues) (jmap-to-dict)))
+
+(defn current-parameters-pool ^(of dict int (of dict str float)) [pool-env]
+  """
+  Get dictionary with current environment parameters.
+  """
+  (dfor (, i env) (.items pool-env.envs) [i (current-parameters env)]))
 
 (defn random-sizing ^(of dict str float) [env]
   """

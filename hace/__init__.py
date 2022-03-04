@@ -19,7 +19,9 @@ from .hace import make_env                      \
                 , initial_sizing                \
                 , initial_sizing_pool           \
                 , current_sizing                \
+                , current_sizing_pool           \
                 , current_parameters            \
+                , current_parameters_pool       \
                 , parameter_identifiers         \
                 , parameter_dict                \
                 , sizing_identifiers            \
