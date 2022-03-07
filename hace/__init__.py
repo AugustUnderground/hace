@@ -11,9 +11,11 @@ from .hace import make_env                      \
                 , evaluate_circuit_pool         \
                 , evaluate_circuit_pool_unsafe  \
                 , simulation_analyses           \
+                , simulation_analyses_pool      \
                 , current_performance           \
                 , current_performance_pool      \
                 , performance_identifiers       \
+                , performance_identifiers_pool  \
                 , random_sizing                 \
                 , random_sizing_pool            \
                 , initial_sizing                \
@@ -23,11 +25,14 @@ from .hace import make_env                      \
                 , current_parameters            \
                 , current_parameters_pool       \
                 , parameter_identifiers         \
+                , parameter_identifiers_pool    \
                 , parameter_dict                \
+                , parameter_dict_pool           \
                 , sizing_identifiers            \
+                , sizing_identifiers_pool       \
                 , load_state                    \
                 , dump_state                    \
-                , to_pool                       \
+                , to_ace_pool                   \
                 , is_pool_env                   \
                 , is_corrupted                  \
                 , is_corrupted_pool             \
@@ -38,5 +43,6 @@ from .hace import make_env                      \
 
 from .util import __name__                      \
                 , __version__                   \
+                , sub_set                       \
                 , jsa_to_list                   \
                 , jmap_to_dict
