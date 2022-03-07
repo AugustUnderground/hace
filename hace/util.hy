@@ -42,6 +42,12 @@
                                 (os.strerror errno.ENOENT) 
                                 class-path)))))
 
+(defn sub-set ^dict [^dict dct ^list idx]
+  """
+  Get a subset of the pool env.
+  """
+  (dfor i idx :if (in i (.keys dct)) [i (get dct i)]))
+
 (defn jparam-to-dict ^dict [jparam]
   """
   Convert a parameter to a dict.
