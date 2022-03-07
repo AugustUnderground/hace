@@ -88,9 +88,6 @@
                               (.format "{} is not a valid ACE id." ace-id)))])]
     (ace-env.get sim-path ckt-path pdk-path)))
 
-;; Wrapper class for creating an Env Pool and keeping track of individual envs.
-(setv AcePoolEnvironment (namedtuple "AcePoolEnvironment" "envs pool"))
-
 (defn make-env-pool [^(of list str) ace-ids ^(of list str) ace-backends
         &optional ^(of list (of list str)) [pdks (repeat [])] 
                   ^(of list str) [ckts (repeat None)] 
@@ -98,13 +95,9 @@
   """
   Function for creating a pool of ACE environments.
   """
-  (let [env-ids (-> ace-ids (len) (range))
-        envs (dfor (, env-id ace-id ace-backend pdk ckt sim) 
-                   (zip env-ids ace-ids ace-backends pdks ckts sims) 
-                   [env-id (make-env ace-id ace-backend pdk ckt sim)])
-        pool (EnvironmentPool)]
-    (for [e (.values envs)] (.add pool e))
-    (AcePoolEnvironment envs pool)))
+  (dfor (, env-id (, ace-id ace-backend pdk ckt sim))
+        (enumerate (zip ace-ids ace-backends pdks ckts sims))
+        [env-id (make-env ace-id ace-backend pdk ckt sim)]))
 
 (defn make-same-env-pool [^int num-envs ^str ace-id ^str ace-backend
         &optional ^(of list str) [pdk []] ^str [ckt None] ^str [sim None]]
@@ -118,21 +111,20 @@
         sims (-> sim (repeat num-envs) (list))]
     (make-env-pool ace-ids ace-backends pdks ckts sims)))
 
-(defn to-pool [env-list] 
+(defn to-ace-pool [pool-env] 
   """
   Convert a list of ACE Environments to a Pooled Environment.
   """
-  (let [envs (-> env-list (enumerate) (dict))
-      pool (EnvironmentPool)]
-    (for [e (.values envs)] (.add pool e))
-    (AcePoolEnvironment envs pool)))
+  (let [pool (EnvironmentPool)]
+    (for [e (.values pool-env)] (.add pool e))
+    pool))
 
 (defn is-pool-env [env]
   """
   Function for checking whether an environment is pooled or not. This avoids
   exposing AcePoolEnvironment.
   """
-  (-> env (type) (is AcePoolEnvironment)))
+  (-> env (type) (is EnvironmentPool)))
 
 (defn set-parameter ^(of dict str float) [env ^str param ^float value]
   """
@@ -152,12 +144,12 @@
 (defn set-parameters-pool [pool-env pool-params]
   """
   Takes dict of the following shape:
-    { 'env_id': {'sizing_parameter': 'value
+    { 'env_id': { 'sizing_parameter': 'value'
                 , ...  }
     , ... }
   """
   (for [(, i ps) (.items pool-params)] 
-    (set-parameters (get pool-env.envs i) ps))
+    (set-parameters (get pool-env i) ps))
   pool-env)
 
 (defn evaluate-circuit ^(of dict str float) 
@@ -183,24 +175,27 @@
       (current-performance env))))
 
 (defn evaluate-circuit-pool ^dict [pool-env &optional ^dict [pool-params {}]
-          ^int [npar (-> 0 (os.sched-getaffinity) (len) (// 2))]] 
+        ^list [pool-ids []] ^int [npar (-> 0 (os.sched-getaffinity) (len) (// 2))]] 
   """
   Takes a dict of the same shape as `set_parameters_pool` and evaluates a given
   ace env.
   """
-  (-> pool-env (set-parameters-pool pool-params) (. pool) (.execute npar))
-  (if (-> pool-env (any-corrupted-pool))
-      (do (lfor (, i env) (.items pool-env.envs) 
-                (dump-state env f"/tmp/hace_dump_{i}_{(time)}.json"))
-          (raise (AcePoolCorruptionException pool-env)))
-      (current-performance-pool pool-env)))
+  (let [env-ids (or pool-ids (-> pool-env (len) (range)))
+      params (sub-set pool-params env-ids)]
+    (-> pool-env (set-parameters-pool params) (sub-set env-ids) 
+                 (to-ace-pool) (.execute npar))
+    (if (-> pool-env (any-corrupted-pool))
+        (do (lfor (, i env) (.items pool-env) 
+                  (dump-state env f"/tmp/hace_dump_{i}_{(time)}.json"))
+            (raise (AcePoolCorruptionException pool-env)))
+        (current-performance-pool pool-env))))
 
 (defn evaluate-circuit-pool-unsafe ^dict [pool-env &kwargs kwargs]
   """
   Returns an empty dictionary if evaluation results are corrupt.
   """
   (try
-    (ac.evaluate-circuit-pool pool-env #** kwargs)
+    (evaluate-circuit-pool pool-env #** kwargs)
     (except [e Exception] 
       (current-performance-pool pool-env))))
 
@@ -214,7 +209,7 @@
   """
   Checks if environments within a pool are corrutped.
   """
-  (dfor (, i e) (.items pool-env.envs) [i (.isCorrupted e)]))
+  (dfor (, i e) (.items pool-env) [i (.isCorrupted e)]))
 
 (defn any-corrupted-pool ^bool [pool-env]
   """
@@ -241,13 +236,20 @@
   Returns the current performance of all circuits in the pool. Values not
   present for whatever reason will be filled with 0.
   """
-  (dfor (, i e) (.items pool-env.envs) [i (current-performance e)]))
+  (dfor (, i e) (.items pool-env) [i (current-performance e)]))
 
 (defn performance-identifiers ^(of list str) [env &optional ^list [blocklist []]]
   """
   Get list of available performance parameters.
   """
   (jsa-to-list (.getPerformanceIdentifiers env (HashSet blocklist))))
+
+(defn performance-identifiers-pool ^(of list str) [pool-env &optional ^(of dict int list) [blocklist {}]]
+  """
+  Get list of available performance parameters of pool env.
+  """
+  (lfor (, i e) (.items pool-env) 
+        [ i (performance-identifiers e (.get blocklist i [])) ]))
 
 (defn current-sizing ^(of dict str float) [env]
   """
@@ -261,7 +263,7 @@
   """
   Get dictionary with current sizing parameters for all envs in pool.
   """
-  (dfor (, i env) (.items pool-env.envs) [i (current-sizing env)]))
+  (dfor (, i env) (.items pool-env) [i (current-sizing env)]))
 
 (defn current-parameters ^(of dict str float) [env]
   """
@@ -273,7 +275,7 @@
   """
   Get dictionary with current environment parameters.
   """
-  (dfor (, i env) (.items pool-env.envs) [i (current-parameters env)]))
+  (dfor (, i env) (.items pool-env) [i (current-parameters env)]))
 
 (defn random-sizing ^(of dict str float) [env]
   """
@@ -285,7 +287,7 @@
   """
   Returns random sizing parameters for a pool.
   """
-  (dfor (, i env) (.items pool-env.envs) [i (random-sizing env)]))
+  (dfor (, i env) (.items pool-env) [i (random-sizing env)]))
 
 (defn initial-sizing ^(of dict str float) [env]
   """
@@ -297,7 +299,7 @@
   """
   Returns 'reasonable' sizing parameters for a pool.
   """
-  (dfor (, i env) (.items pool-env.envs) [i (initial-sizing env)]))
+  (dfor (, i env) (.items pool-env) [i (initial-sizing env)]))
 
 (defn sizing-identifiers ^(of list str) [env]
   """
@@ -306,28 +308,54 @@
   (let [ap (parameter-identifiers env)]
     (list (filter (fn [p] (-> p (first) (in ["W" "L" "M"]) )) ap))))
 
+(defn sizing-identifiers-pool ^(of dict int (of list str)) [pool-env]
+  """
+  Returns sizing parameters for a pool.
+  """
+  (dfor (, i env) (.items pool-env) [i (sizing-identifiers env)]))
+
 (defn parameter-identifiers ^(of list str) [env]
   """
   A list of all available netlist parameters for a given OP-Amp
   """
   (-> env (.getParameters) (jsa-to-list)))
 
+(defn parameter-identifiers-pool ^(of dict int (of list str)) [pool-env]
+  """
+  Returns parameters for a pool.
+  """
+  (dfor (, i env) (.items pool-env) [i (parameter-identifiers env)]))
+
 (defn parameter-dict [env]
   """
-  Turn parameters into a nested dict
+  Turn parameters into a nested dict.
   """
   (dfor (, k v) (-> env (.getParameters) (dict) (.items))
     [(str k) (jparam-to-dict v)]))
 
+(defn parameter-dict-pool ^(of dict int (of dict str float)) [pool-env]
+  """
+  Turn parameters into a nested dict for pooled env.
+  """
+  (dfor (, i env) (.items pool-env) [i (parameter-dict env)]))
+
 (defn simulation-analyses ^(of list str) [env]
+  """
+  Return available simulation analyses for the given ace env.
+  """
   (-> env (.getAnalyses) (jsa-to-list)))
+
+(defn simulation-analyses-pool ^(of dict int (of list str)) [pool-env]
+  """
+  Return available simulation analyses for the given ace env pool.
+  """
+  (dfor (, i env) (.items pool-env) [i (simulation-analyses env)]))
 
 (defn dump-state ^(of dict str float) [env &optional ^str [file-name None]]
   """
   Returns the current state dict and dumps it to a file, if a `file-name` is
   specified. Supported formats are `csv`, `json` and `yaml`.
   """
-
   (let [state-dict (| (current-parameters env) (current-performance env))
         file-format     (-> file-name (os.path.splitext) (second))]
 
