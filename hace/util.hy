@@ -53,8 +53,8 @@
   """
   convert nans and +/- infs to numeric
   """
-  (cond [(and (isinf num) (> num 0)) 2.0e38]
-        [(and (isinf num) (> num 0)) (- 2.0e38)]
+  (cond [(and (isinf num) (> num 0)) 1.0e10]
+        [(and (isinf num) (> num 0)) (- 1.0e10)]
         [(isnan num) 0.0]
         [True num]))
 
