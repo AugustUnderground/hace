@@ -2,6 +2,7 @@
 (import shutil)
 (import errno)
 (import importlib)
+(import [math [nan inf isnan isinf]])
 (import [pkg-resources [get-distribution]])
 (import [typing [Union]])
 
@@ -28,7 +29,7 @@
 
 (defn default-class-path ^str []
   """
-  Get the expected class path for the `ace-X.Y.Z-jar-with-dependencies.jar` 
+  Get the expected class path for the `ace-X.Y.Z-jar-with-dependencies.jar`
   archive, including all dependencies.
   """
   (let [maven-home (get-maven-home)
@@ -48,6 +49,15 @@
   """
   (dfor i idx :if (in i (.keys dct)) [i (get dct i)]))
 
+(defn nan-to-num ^float [^float num]
+  """
+  convert nans and +/- infs to numeric
+  """
+  (cond [(and (isinf num) (> num 0)) 2.0e38]
+        [(and (isinf num) (> num 0)) (- 2.0e38)]
+        [(isnan num) 0.0]
+        [True num]))
+
 (defn jparam-to-dict ^dict [jparam]
   """
   Convert a parameter to a dict.
@@ -64,13 +74,13 @@
   Convert Java HashMap to native Python dictionary.
   """
   (dfor (, k v) (.items (dict jmap))
-    [(str k) (if (hasattr v "real") v.real (jmap-to-dict v)) ]))
+    [(str k) (if (hasattr v "real") (nan-to-num v.real) (jmap-to-dict v)) ]))
 
 (defn jna-to-list ^list [jna]
   """
   Convert Java Numeric List/Array to native Python list.
   """
-  (list (map #%(.real %1) jna)))
+  (list (map #%(nan-to-num (.real %1)) jna)))
 
 (defn jsa-to-list ^(of list str) [jsa]
   """
