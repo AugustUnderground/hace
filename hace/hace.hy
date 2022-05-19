@@ -229,7 +229,7 @@
   whatever reason will be filled with 0.
   """
   (| (dict (zip (performance-identifiers env) (repeat 0)))
-     (-> env (.getPerformanceValues) (jmap-to-dict) (scale env))))
+     (-> env (.getPerformanceValues) (jmap-to-dict) (scale-performance env))))
 
 (defn current-performance-pool ^(of dict int (of dict str float)) [pool-env]
   """
@@ -244,7 +244,8 @@
   """
   (jsa-to-list (.getPerformanceIdentifiers env (HashSet blocklist))))
 
-(defn performance-identifiers-pool ^(of list str) [pool-env &optional ^(of dict int list) [blocklist {}]]
+(defn performance-identifiers-pool ^(of list str) 
+        [pool-env &optional ^(of dict int list) [blocklist {}]]
   """
   Get list of available performance parameters of pool env.
   """
