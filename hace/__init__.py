@@ -30,6 +30,7 @@ from .hace import make_env                      \
                 , parameter_dict_pool           \
                 , sizing_identifiers            \
                 , sizing_identifiers_pool       \
+                , scale_factor                  \
                 , load_state                    \
                 , dump_state                    \
                 , to_ace_pool                   \

@@ -14,7 +14,7 @@
 (import [hy.contrib.pprint [pp pprint]])
 
 
-(setx op (ac.make-env "op8" "xh035-3V3"))
+(setx op (ac.make-env "op2" "xh018-1V8"))
 
 (setv tic (.time time))
 (setv op-res (->> op (ac.initial-sizing) (ac.evaluate-circuit op)))

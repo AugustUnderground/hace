@@ -351,6 +351,12 @@
   """
   (dfor (, i env) (.items pool-env) [i (simulation-analyses env)]))
 
+(defn scale-factor [env]
+  """
+  Returns technology scale.
+  """
+  (-> env (.getScale) (float)))
+
 (defn dump-state ^(of dict str float) [env &optional ^str [file-name None]]
   """
   Returns the current state dict and dumps it to a file, if a `file-name` is
