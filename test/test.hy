@@ -14,6 +14,21 @@
 (import [hy.contrib.pprint [pp pprint]])
 
 
+(setx op (ac.make-env "op8" "xh035-3V3"))
+
+(setv tic (.time time))
+(setv op-res (->> op (ac.initial-sizing) (ac.evaluate-circuit op)))
+(setv toc (.time time))
+(print f"Evaluating op took {(- toc tic):.4}s.")
+
+(pp (dfor (, k v) (.items op-res) :if (or (= k "A") (.islower k)) [k v]))
+
+(get op-res "voff_stat")
+(pp (ac.current-sizing op))
+
+
+
+
 (setv num-envs 5)
 (setx ops (ac.make-same-env-pool num-envs "op2" "xh035-3V3"))
 
