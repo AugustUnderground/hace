@@ -58,6 +58,14 @@
         [(isnan num) 0.0]
         [True num]))
 
+(defn scale-performance ^dict [^dict performance env]
+  """
+  Scale performance according to technology scale.
+  """
+  (let [factor (-> env (.getScale) (float))]
+    (dfor (, k v) (.items performance) 
+          [k (if (= k "A") (* v factor factor) v)])))
+
 (defn jparam-to-dict ^dict [jparam]
   """
   Convert a parameter to a dict.

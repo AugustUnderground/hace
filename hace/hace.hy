@@ -229,7 +229,7 @@
   whatever reason will be filled with 0.
   """
   (| (dict (zip (performance-identifiers env) (repeat 0)))
-     (-> env (.getPerformanceValues) (jmap-to-dict))))
+     (-> env (.getPerformanceValues) (jmap-to-dict) (scale env))))
 
 (defn current-performance-pool ^(of dict int (of dict str float)) [pool-env]
   """
