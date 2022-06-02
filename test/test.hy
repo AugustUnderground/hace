@@ -15,6 +15,37 @@
 
 
 (setx op (ac.make-env "op2" "xh018-1V8"))
+(setx op (ac.make-env "op2" "xh035-3V3"))
+(setv perf (ac.evaluate-circuit op :params (ac.random-sizing op)))
+(setv pi (ac.performance-identifiers op))
+(setv pp (list (.keys (ac.evaluate-circuit op))))
+
+(.difference (set pi) pp)
+(.difference (set pp) pi)
+
+(pp (ac.parameter-dict op))
+
+(pd.DataFrame :columns ["idd" "iss"])
+
+(setx pool (ac.to-ace-pool (dict (enumerate [op op op]))))
+
+
+(lfor (, k v) (.items (ac.parameter-dict op)) :if (get v "sizing") (get v "max"))
+
+(setv perf (ac.evaluate-circuit op :blocklist ["stb" "ac" "dc1" "dc4" "dc3" "noise" "dcmatch" "tran" "dcop" "xf"]))
+(setv perf (ac.evaluate-circuit op ))
+
+
+(lfor p (list (.keys perf)) :if (not-in p (ac.performance-identifiers op)) p)
+
+(op.simulate)
+
+(pp perf)
+
+(get perf "voff_stat")
+
+(pp (dfor (, k v) (.items perf) :if (.endswith k ":vds") [k v]))
+(pp (dfor (, k v) (.items perf) :if (.endswith k ":id") [k v]))
 
 (setv tic (.time time))
 (setv op-res (->> op (ac.initial-sizing) (ac.evaluate-circuit op)))
@@ -23,7 +54,7 @@
 
 (pp (dfor (, k v) (.items op-res) :if (or (= k "A") (.islower k)) [k v]))
 
-(get op-res "voff_stat")
+(get perf "a_0")
 (pp (ac.current-sizing op))
 
 
@@ -32,7 +63,9 @@
 (setv num-envs 5)
 (setx ops (ac.make-same-env-pool num-envs "op2" "xh035-3V3"))
 
-(ac.evaluate-circuit-pool ops)
+(ac.to-ace-pool [op op op])
+
+(setv obs (ac.evaluate-circuit-pool (dfor i (range 100) [i op])))
 (pp (ac.random-sizing-pool ops))
 (pp (ac.random-sizing-pool ops))
 
