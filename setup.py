@@ -9,7 +9,7 @@ with open('requirements.txt', 'r') as req:
     requirements = req.read().splitlines()
  
 setuptools.setup( name                          = package_name
-                , version                       = '0.0.9'
+                , version                       = '0.0.10'
                 , author                        = 'Yannick Uhlmann, Matthias Schweikardt'
                 , author_email                  = 'yannick.uhlmann@reutlingen-university.de'
                 , description                   = 'Analog Circuit Characterization Environment'
