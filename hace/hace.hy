@@ -180,7 +180,7 @@
   Takes a dict of the same shape as `set_parameters_pool` and evaluates a given
   ace env.
   """
-  (let [env-ids (or pool-ids (-> pool-env (len) (range)))
+  (let [env-ids (or pool-ids (list (.keys pool-env)))
       params (sub-set pool-params env-ids)]
     (-> pool-env (set-parameters-pool params) (sub-set env-ids) 
                  (to-ace-pool) (.execute npar))
