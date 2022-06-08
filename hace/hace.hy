@@ -51,7 +51,8 @@
     (lfor self.envs.pool.toString)))
 
 (defn make-env [^str ace-id ^str ace-backend 
-        &optional ^(of list str) [pdk []] ^str [ckt None] ^str [sim None]]
+        &optional ^(of list str) [pdk []] ^str [ckt None] ^str [sim None]
+                  ^int [restart-period 500]]
   """
   Function for creating ACE environments for a given backend.
     Example: `make_env('op1', 'xh035-3V3')`
@@ -86,7 +87,8 @@
                 [True (raise (NotImplementedError errno.ENOSYS
                               (os.strerror errno.ENOSYS) 
                               (.format "{} is not a valid ACE id." ace-id)))])]
-    (ace-env.get sim-path ckt-path pdk-path)))
+    (.setRestartPeriod (ace-env.get sim-path ckt-path pdk-path) 
+                       restart-period)))
 
 (defn make-env-pool [^(of list str) ace-ids ^(of list str) ace-backends
         &optional ^(of list (of list str)) [pdks (repeat [])] 
@@ -357,6 +359,31 @@
   Returns technology scale.
   """
   (-> env (.getScale) (float)))
+
+(defn restart-period [env]
+  """
+  Returns the restart period
+  """
+  (-> env (.getRestartPeriod) (int)))
+
+(defn restart-period-pool [pool-env]
+  """
+  Returns the restart period
+  """
+  (dfor (, i env) (.items pool-env) [i (restart-period env)]))
+
+(defn set-restart-period [env ^int period]
+  """
+  Returns a new env object with the new period
+  """
+  (.setRestartPeriod env period))
+
+(defn set-restart-period-pool [pool-env ^dict periods]
+  """
+  Changes the restart periods of the specified envs in pool
+  """
+  (dfor (, i env) (.items pool-env) 
+    [i (set-restart-period env (.get periods i (restart-period env)))]))
 
 (defn dump-state ^(of dict str float) [env &optional ^str [file-name None]]
   """

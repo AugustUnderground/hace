@@ -39,6 +39,10 @@ from .hace import make_env                      \
                 , is_corrupted_pool             \
                 , any_corrupted_pool            \
                 , all_corrupted_pool            \
+                , restart_period                \
+                , restart_period_pool           \
+                , set_restart_period            \
+                , set_restart_period_pool       \
                 , AceCorruptionException        \
                 , AcePoolCorruptionException
 

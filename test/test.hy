@@ -13,7 +13,10 @@
 (require [hy.extra.anaphoric [*]])
 (import [hy.contrib.pprint [pp pprint]])
 
-(setx op (ac.make-env "op2" "xh018-1V8" :ckt "~/Workspace/ace-xh018-1v8/op2"))
+(setx op (ac.make-env "op2" "xh035-3V3"))
+
+
+(ac.evaluate-circuit op)
 
 (setx op (ac.make-env "op2" "xh018-1V8"))
 (setx op (ac.make-env "op2" "xh035-3V3"))
