@@ -13,10 +13,63 @@
 (require [hy.extra.anaphoric [*]])
 (import [hy.contrib.pprint [pp pprint]])
 
-(setx op (ac.make-env "op2" "xh035-3V3"))
+(setx op (ac.make-env "op11" "xh018-1V8"))
+
+(setv perf (ac.evaluate-circuit op :params (ac.random-sizing op)))
+
+(setv perf (ac.evaluate-circuit op :params {"Wd2" 8.0e-6 "Ld2" 5.15e-6}))
+(pp (dfor (, k v) (.items perf) :if (.endswith k ":id") [k (* (abs v) 1e6)]))
+
+(get perf "MPD21:gmoverid")
+
+(pp (dfor (, k v) (.items perf) :if (or (= k "A") (.islower (first k))) [k v]))
+
+(len (dfor (, k v) (.items perf) :if (or (= k "A") (.islower (first k))) [k v]))
+
+(len (dfor (, k v) (.items perf) :if (.startswith k "MNCM11/") [k v]))
 
 
-(ac.evaluate-circuit op)
+(setx pool (dfor i (range 32) [i (ac.make-env "op11" "xh035-3V3")]))
+
+(setv df (pd.concat (lfor _ (range 100)
+  (. (pd.DataFrame.from-dict (ac.evaluate-circuit-pool pool 
+        :pool-params (ac.random-sizing-pool pool))) T))))
+
+(pp (dfor c df.columns :if (or (.islower (first c)) (= c "A")) [c (.mean (get df c))]))
+
+
+
+(setv bl ["stb" "noise" "dcmatch" "tran" "xf"])
+
+(setv bl ["stb" "ac" "dc1" "dc4" "dc3" "noise" "dcmatch" "tran" "dcop" "xf"])
+
+(setv tic (.time time))
+(setv x (ac.evaluate-circuit op :params (ac.random-sizing op) 
+          :blocklist ["stb" "ac" "dc1" "dc4" "dc3" "noise" "dcmatch" "tran" "dcop" "xf"]) )
+(pp x)
+(setv toc (.time time))
+(print f"Evaluating op took {(- toc tic):.4}s.")
+
+
+(setv tic (.time time))
+(setv x (ac.evaluate-circuit op :params (ac.random-sizing op)) )
+(setv toc (.time time))
+(print f"Evaluating op took {(- toc tic):.4}s.")
+
+
+
+
+(* (get perf "ugbw") 1.02)
+
+(* (get perf "sr_r") 1.05)
+
+(setv params ["MNCM11:gmoverid" "MNCM11:fug" "MNCM31:gmoverid" "MNCM31:fug" "MNCM32:id" "MNCM12:id" "MND11:gmoverid" "MND11:fug" "MPCM221:gmoverid" "MPCM221:fug"])
+
+(setv params ["MNCM1R:gmoverid" "MNCM1R:fug" "MNCM1A:id" "MNCM1B:id" "MPCS1:gmoverid" "MPCS1:fug" "MND1A:gmoverid" "MND1A:fug" "MPCM2R:gmoverid" "MPCM2R:fug"])
+
+(setv params [ "MNCM51:gmoverid" "MPCM41:gmoverid" "MPCM31:gmoverid" "MNCM21:gmoverid" "MNCM11:gmoverid" "MND11:gmoverid" "MNCM51:fug" "MPCM41:fug" "MPCM31:fug" "MNCM21:fug" "MNCM11:fug" "MND11:fug" "MNCM53:id" "MNCM21:id" ])
+
+(pp (dfor p params [p (if (.endswith p ":fug") (np.log10 (get perf p)) (get perf p))]))
 
 (setx op (ac.make-env "op2" "xh018-1V8"))
 (setx op (ac.make-env "op2" "xh035-3V3"))
@@ -29,9 +82,32 @@
 
 (pp (ac.parameter-dict op))
 
-(pd.DataFrame :columns ["idd" "iss"])
 
-(setx pool (ac.to-ace-pool (dict (enumerate [op op op]))))
+(setx pool (dict (enumerate (lfor _ (range 32) (ac.make-env "op11" "xh035-3V3")))))
+
+(setx pool (dfor i (range 32) [i (ac.make-env "op11" "xh035-3V3")]))
+
+
+(setv df (pd.concat (lfor _ (range 25)
+  (. (pd.DataFrame.from-dict (ac.evaluate-circuit-pool pool 
+        :pool-params (ac.random-sizing-pool pool))) T))))
+
+(setv ref-devs ["MND11" "MPD21" "MNCM11" "MNLS11" "MNR1" "MPCM21" "MPR2" "MPCM31" "MNCM41"])
+
+(for [d ref-devs] (print f"{d}:vbs {(.mean (get df (+ d \":vbs\")))}"))
+
+
+(pp (dfor (, k v) (.items perf) :if (and (in (first (.split k ":")) ref-devs) (.endswith k ":vbs")) [k v]))
+
+(.describe (np.log10 (np.abs (get df ["i_out_max" "i_out_min" "idd" "iss"]))))
+(.describe (get df ["i_out_max" "i_out_min" "idd" "iss"]))
+(.describe (get df ["voff_stat" "voff_sys"]))
+
+(.describe (get df (lfor c (. df columns) :if (or (.startswith c "vn_")) c)))
+
+(defn transpose [perf]
+  (dfor (, k v) (-> perf (pd.DataFrame.from-dict) (. T) (.to-dict) (.items))
+    [k (-> v (.values) (list) (np.array))]))
 
 
 (lfor (, k v) (.items (ac.parameter-dict op)) :if (get v "sizing") (get v "max"))
